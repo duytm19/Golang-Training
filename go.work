@@ -1,0 +1,8 @@
+go 1.26
+
+use (
+	./card-onboarding-services
+	./card-onboarding-workers
+	./card-onboarding-workers/card-onboarding-file-preprocessor
+	./card-onboarding-workers/card-onboarding-worker
+)

@@ -1,0 +1,57 @@
+# Binaries and executable files
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go Workspaces local files
+go.work.sum
+
+# AWS CDK / Serverless staging and output files
+.cdk.staging/
+cdk.out/
+.serverless/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs and Editors settings
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+
+# Environment secrets and private credentials
+.env
+.env.*
+! .env.example
+*.pem
+*.key
+*.cert
+*.pfx
+
+# Dependency directories
+vendor/
+node_modules/
+
+# Test coverage files
+coverage.txt
+coverage.html
+
+# Internal roadmap and documentation files
+card_onboarding_platform_roadmap.md
+Card Onboarding Platform Design 2026.docx

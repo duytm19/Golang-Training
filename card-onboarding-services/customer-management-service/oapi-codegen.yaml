@@ -1,0 +1,7 @@
+# oapi-codegen configuration for customer-management-service
+package: customer
+generate:
+  types: true
+  gin-server: true
+  client: true
+output: pkg/customer/customer.gen.go

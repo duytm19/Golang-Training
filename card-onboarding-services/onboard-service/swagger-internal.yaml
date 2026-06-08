@@ -1,0 +1,229 @@
+openapi: 3.0.3
+info:
+  title: Onboard Service API
+  version: 1.0.0
+  description: Orchestrates card onboarding transactions and state history updates.
+paths:
+  /internal/cards/onboard:
+    post:
+      summary: Onboard cardholder
+      operationId: OnboardCard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OnboardRequest'
+      responses:
+        '200':
+          description: Onboarding completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Downstream connection failure or database write error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /internal/cards/{customerId}/status:
+    get:
+      summary: Retrieve cardholder onboarding workflow status
+      operationId: GetOnboardStatus
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Onboarding workflow status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+        '404':
+          description: Customer onboarding record not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Database read error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      summary: Check health
+      operationId: HealthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "UP"
+
+components:
+  schemas:
+    OnboardRequest:
+      type: object
+      required:
+        - correlationId
+        - jobId
+        - recordId
+        - sourceFile
+        - rowNumber
+        - customerId
+        - cardType
+        - cardNumber
+        - expiryDate
+        - holderName
+        - email
+      properties:
+        correlationId:
+          type: string
+          example: "corr-123"
+        jobId:
+          type: string
+          example: "JOB-20260606-001"
+        recordId:
+          type: string
+          example: "REC-001"
+        sourceFile:
+          type: string
+          example: "cards_20260606.csv"
+        rowNumber:
+          type: integer
+          example: 2
+        customerId:
+          type: string
+          example: "CUST001"
+        cardType:
+          type: string
+          enum: [VISA, MASTERCARD, AMEX]
+          example: "VISA"
+        cardNumber:
+          type: string
+          example: "4111111111111111"
+        expiryDate:
+          type: string
+          pattern: '^(0[1-9]|1[0-2])\/[0-9]{2}$'
+          example: "12/28"
+        holderName:
+          type: string
+          example: "Nguyen Van A"
+        email:
+          type: string
+          format: email
+          example: "a@example.com"
+
+    OnboardResponse:
+      type: object
+      required:
+        - customerId
+        - coreCustomerId
+        - accountId
+        - cardId
+        - status
+      properties:
+        customerId:
+          type: string
+          example: "CUST001"
+        coreCustomerId:
+          type: string
+          example: "CORE-CUST001"
+        accountId:
+          type: string
+          example: "ACC-CUST001"
+        cardId:
+          type: string
+          example: "CARD-CUST001-001"
+        status:
+          type: string
+          example: "ONBOARDED"
+
+    StatusResponse:
+      type: object
+      required:
+        - customerId
+        - overallStatus
+      properties:
+        customerId:
+          type: string
+          example: "CUST001"
+        overallStatus:
+          type: string
+          enum: [IN_PROGRESS, SUCCEEDED, FAILED]
+          example: "SUCCEEDED"
+        customerRegistrationStatus:
+          type: string
+          enum: [IN_PROGRESS, SUCCEEDED, FAILED]
+          example: "SUCCEEDED"
+        customerRegistrationMessage:
+          type: string
+          example: "Customer registered successfully"
+        interestDetailsStatus:
+          type: string
+          enum: [IN_PROGRESS, SUCCEEDED, FAILED]
+          example: "SUCCEEDED"
+        interestDetailsMessage:
+          type: string
+          example: "Interest details fetched successfully"
+        accountOnboardingStatus:
+          type: string
+          enum: [IN_PROGRESS, SUCCEEDED, FAILED]
+          example: "SUCCEEDED"
+        accountOnboardingMessage:
+          type: string
+          example: "Account onboarded successfully"
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+        - correlationId
+      properties:
+        code:
+          type: string
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          example: "request validation failed"
+        correlationId:
+          type: string
+          example: "corr-123"
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+
+    ErrorDetail:
+      type: object
+      required:
+        - field
+        - issue
+      properties:
+        field:
+          type: string
+          example: "customerId"
+        issue:
+          type: string
+          example: "customerId is required"

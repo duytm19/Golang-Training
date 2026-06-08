@@ -1,0 +1,7 @@
+# oapi-codegen configuration for account-management-service
+package: account
+generate:
+  types: true
+  gin-server: true
+  client: true
+output: pkg/account/account.gen.go

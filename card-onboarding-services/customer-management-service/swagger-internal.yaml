@@ -1,0 +1,161 @@
+openapi: 3.0.3
+info:
+  title: Customer Management Service API
+  version: 1.0.0
+  description: Mock core banking customer management registry.
+paths:
+  /internal/customers/register:
+    post:
+      summary: Register customer
+      operationId: RegisterCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterCustomerRequest'
+      responses:
+        '200':
+          description: Customer registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterCustomerResult'
+        '400':
+          description: Validation error or simulated bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal service error or simulated failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /internal/customers/{customerId}:
+    get:
+      summary: Retrieve customer details
+      operationId: GetCustomer
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customer retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterCustomerResult'
+        '404':
+          description: Customer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal service error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      summary: Check health
+      operationId: HealthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "UP"
+
+components:
+  schemas:
+    RegisterCustomerRequest:
+      type: object
+      required:
+        - correlationId
+        - customerId
+        - holderName
+        - email
+      properties:
+        correlationId:
+          type: string
+          example: "corr-123"
+        customerId:
+          type: string
+          example: "CUST001"
+        holderName:
+          type: string
+          example: "Nguyen Van A"
+        email:
+          type: string
+          format: email
+          example: "a@example.com"
+
+    RegisterCustomerResult:
+      type: object
+      required:
+        - customerId
+        - coreCustomerId
+        - status
+        - registeredAt
+      properties:
+        customerId:
+          type: string
+          example: "CUST001"
+        coreCustomerId:
+          type: string
+          example: "CORE-CUST001"
+        status:
+          type: string
+          example: "REGISTERED"
+        registeredAt:
+          type: string
+          format: date-time
+          example: "2026-06-06T10:00:00Z"
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+        - correlationId
+      properties:
+        code:
+          type: string
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          example: "request validation failed"
+        correlationId:
+          type: string
+          example: "corr-123"
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+
+    ErrorDetail:
+      type: object
+      required:
+        - field
+        - issue
+      properties:
+        field:
+          type: string
+          example: "customerId"
+        issue:
+          type: string
+          example: "customerId is required"

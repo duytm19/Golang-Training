@@ -1,0 +1,114 @@
+openapi: 3.0.3
+info:
+  title: Account Management Service API
+  version: 1.0.0
+  description: Mock savings product and account interest rates ledger.
+paths:
+  /internal/accounts/{customerId}/interest-details:
+    get:
+      summary: Retrieve customer interest rate details
+      operationId: GetInterestDetails
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Interest details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterestDetailsResponse'
+        '404':
+          description: Interest details not found or simulated missing interest
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal service error or simulated failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      summary: Check health
+      operationId: HealthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "UP"
+
+components:
+  schemas:
+    InterestDetailsResponse:
+      type: object
+      required:
+        - customerId
+        - productCode
+        - interestRate
+        - interestType
+        - currency
+      properties:
+        customerId:
+          type: string
+          example: "CUST001"
+        productCode:
+          type: string
+          example: "SAVINGS_BASIC"
+        interestRate:
+          type: number
+          format: float
+          example: 4.5
+        interestType:
+          type: string
+          enum: [FIXED, VARIABLE]
+          example: "VARIABLE"
+        currency:
+          type: string
+          example: "AUD"
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+        - correlationId
+      properties:
+        code:
+          type: string
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          example: "request validation failed"
+        correlationId:
+          type: string
+          example: "corr-123"
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+
+    ErrorDetail:
+      type: object
+      required:
+        - field
+        - issue
+      properties:
+        field:
+          type: string
+          example: "customerId"
+        issue:
+          type: string
+          example: "customerId is required"

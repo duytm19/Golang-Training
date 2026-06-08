@@ -1,0 +1,7 @@
+# oapi-codegen configuration for onboard-service
+package: onboard
+generate:
+  types: true
+  gin-server: true
+  client: true
+output: pkg/onboard/onboard.gen.go

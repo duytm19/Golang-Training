@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
-	"time"
+	"strings"
 )
 
 var (
@@ -27,56 +27,57 @@ type CardRecord struct {
 	Email         string `json:"email"`
 }
 
-// ValidateCardRecord performs business validations on the card record.
-func ValidateCardRecord(rec CardRecord, now time.Time) error {
-	// 1. Card Type Validation
+// ValidateCardRecord performs business validation on a card record per the
+// documented rules (section 8.3): required fields plus card type, numeric card
+// number, MM/YY expiry format, and email format.
+func ValidateCardRecord(rec CardRecord) error {
+	// 1. customerId is required
+	if strings.TrimSpace(rec.CustomerId) == "" {
+		return errors.New("customerId is required")
+	}
+
+	// 2. cardType is required and must be VISA, MASTERCARD, or AMEX
 	switch rec.CardType {
 	case "VISA", "MASTERCARD", "AMEX":
-		// Valid
+		// valid
+	case "":
+		return errors.New("cardType is required")
 	default:
 		return fmt.Errorf("invalid card type: %q (must be VISA, MASTERCARD, or AMEX)", rec.CardType)
 	}
 
-	// 2. Card Number Validation
-	if !numericRegex.MatchString(rec.CardNumber) {
-		return errors.New("card number must be numeric")
+	// 3. cardNumber is required and must be numeric
+	if rec.CardNumber == "" {
+		return errors.New("cardNumber is required")
 	}
-	cardLen := len(rec.CardNumber)
-	if cardLen < 13 || cardLen > 19 {
-		return fmt.Errorf("invalid card number length: %d (must be between 13 and 19)", cardLen)
+	if !numericRegex.MatchString(rec.CardNumber) {
+		return errors.New("cardNumber must be numeric")
 	}
 
-	// 3. Expiry Date Validation (MM/YY)
+	// 4. expiryDate is required and must be MM/YY
+	if rec.ExpiryDate == "" {
+		return errors.New("expiryDate is required")
+	}
 	if len(rec.ExpiryDate) != 5 || rec.ExpiryDate[2] != '/' {
 		return fmt.Errorf("invalid expiry date format: %q (must be MM/YY)", rec.ExpiryDate)
 	}
-	mmStr := rec.ExpiryDate[0:2]
-	yyStr := rec.ExpiryDate[3:5]
-
-	month, err := strconv.Atoi(mmStr)
+	month, err := strconv.Atoi(rec.ExpiryDate[0:2])
 	if err != nil || month < 1 || month > 12 {
-		return fmt.Errorf("invalid expiry month: %q", mmStr)
+		return fmt.Errorf("invalid expiry month: %q (must be MM/YY)", rec.ExpiryDate[0:2])
+	}
+	if _, err := strconv.Atoi(rec.ExpiryDate[3:5]); err != nil {
+		return fmt.Errorf("invalid expiry year: %q (must be MM/YY)", rec.ExpiryDate[3:5])
 	}
 
-	yearLastTwo, err := strconv.Atoi(yyStr)
-	if err != nil || yearLastTwo < 0 {
-		return fmt.Errorf("invalid expiry year: %q", yyStr)
+	// 5. holderName is required
+	if strings.TrimSpace(rec.HolderName) == "" {
+		return errors.New("holderName is required")
 	}
 
-	// Assume 21st century (2000s)
-	expiryYear := 2000 + yearLastTwo
-	expiryMonth := time.Month(month)
-
-	// A card is valid until the last day of the expiry month.
-	// To check expiration, we verify if the expiry month/year is before the current month/year.
-	curYear := now.Year()
-	curMonth := int(now.Month())
-
-	if expiryYear < curYear || (expiryYear == curYear && int(expiryMonth) < curMonth) {
-		return fmt.Errorf("card has expired: %s (current date: %s)", rec.ExpiryDate, now.Format("01/06"))
+	// 6. email is required and must be a valid email format
+	if rec.Email == "" {
+		return errors.New("email is required")
 	}
-
-	// 4. Email Validation
 	if !emailRegex.MatchString(rec.Email) {
 		return fmt.Errorf("invalid email format: %q", rec.Email)
 	}

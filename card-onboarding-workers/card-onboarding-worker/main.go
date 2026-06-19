@@ -42,7 +42,7 @@ func (h *WorkerHandler) HandleEvent(ctx context.Context, sqsEvent events.SQSEven
 			rec.CorrelationId, rec.JobId, rec.RecordId, rec.CustomerId, maskedCard)
 
 		// 1. Business validations
-		err = validator.ValidateCardRecord(rec, time.Now())
+		err = validator.ValidateCardRecord(rec)
 		if err != nil {
 			log.Printf(`{"level":"warn","message":"Business validation failed for card: %v","correlationId":"%s","recordId":"%s","customerId":"%s"}`+"\n",
 				err, rec.CorrelationId, rec.RecordId, rec.CustomerId)

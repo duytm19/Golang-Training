@@ -133,16 +133,53 @@ func (m *MockAccountDetailsStore) GetAccountDetails(ctx context.Context, custome
 	return &cp, nil
 }
 
-// SaveAccountDetails saves details in memory.
-func (m *MockAccountDetailsStore) SaveAccountDetails(ctx context.Context, details *AccountDetails) error {
+// get returns the existing item or initializes a new one (upsert semantics).
+func (m *MockAccountDetailsStore) get(customerId string) *AccountDetails {
+	val, ok := m.details[customerId]
+	if !ok {
+		val = &AccountDetails{CustomerId: customerId, CreatedAt: time.Now().UTC().Format(time.RFC3339)}
+		m.details[customerId] = val
+	}
+	return val
+}
+
+// SaveCustomerInfo upserts customer-level attributes in memory.
+func (m *MockAccountDetailsStore) SaveCustomerInfo(ctx context.Context, customerId, coreCustomerId, customerName, email string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if _, ok := m.details[details.CustomerId]; ok {
-		return errors.New("ConditionalCheckFailedException: details already exists")
-	}
-	cp := *details
-	cp.CreatedAt = time.Now().UTC()
-	m.details[details.CustomerId] = &cp
+	val := m.get(customerId)
+	val.CoreCustomerId = coreCustomerId
+	val.CustomerName = customerName
+	val.Email = email
+	val.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+	return nil
+}
+
+// SaveInterestInfo upserts interest/product attributes in memory.
+func (m *MockAccountDetailsStore) SaveInterestInfo(ctx context.Context, customerId, productCode string, interestRate float64, interestType, currency string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	val := m.get(customerId)
+	val.ProductCode = productCode
+	val.InterestRate = interestRate
+	val.InterestType = interestType
+	val.Currency = currency
+	val.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+	return nil
+}
+
+// SaveCardInfo upserts account/card attributes in memory.
+func (m *MockAccountDetailsStore) SaveCardInfo(ctx context.Context, customerId, accountId, cardId, cardType, cardNumberMasked string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	val := m.get(customerId)
+	val.AccountId = accountId
+	val.CardId = cardId
+	val.CardType = cardType
+	val.CardNumberMasked = cardNumberMasked
+	val.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
 	return nil
 }

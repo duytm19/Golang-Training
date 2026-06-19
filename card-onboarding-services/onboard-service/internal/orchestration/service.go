@@ -7,6 +7,7 @@ import (
 
 	"github.com/org/card-onboarding-services/onboard-service/internal/client"
 	"github.com/org/card-onboarding-services/onboard-service/internal/store"
+	"github.com/org/card-onboarding-services/onboard-service/internal/util"
 	"github.com/org/card-onboarding-services/onboard-service/pkg/onboard"
 )
 
@@ -63,7 +64,7 @@ func (s *OrchestrationService) Onboard(ctx context.Context, req onboard.OnboardR
 			CoreCustomerId: details.CoreCustomerId,
 			AccountId:      details.AccountId,
 			CardId:         details.CardId,
-			Status:         details.Status,
+			Status:         "ONBOARDED",
 		}, nil
 	}
 
@@ -103,6 +104,12 @@ func (s *OrchestrationService) Onboard(ctx context.Context, req onboard.OnboardR
 		if err != nil {
 			return nil, err
 		}
+
+		// Persist customer-level account details (step 12.2).
+		err = s.detailsStore.SaveCustomerInfo(ctx, customerId, coreCustomerId, req.HolderName, string(req.Email))
+		if err != nil {
+			return nil, fmt.Errorf("failed to save customer account details: %w", err)
+		}
 	}
 
 	// Step 2: Interest Details Fetching (Case C)
@@ -112,7 +119,7 @@ func (s *OrchestrationService) Onboard(ctx context.Context, req onboard.OnboardR
 			return nil, err
 		}
 
-		_, err = s.acctClient.GetInterestDetails(ctx, correlationID, customerId)
+		interestRes, err := s.acctClient.GetInterestDetails(ctx, correlationID, customerId)
 		if err != nil {
 			_ = s.statusStore.UpdateInterestDetails(ctx, customerId, "FAILED", err.Error())
 			return nil, fmt.Errorf("interest details step failed: %w", err)
@@ -121,6 +128,12 @@ func (s *OrchestrationService) Onboard(ctx context.Context, req onboard.OnboardR
 		err = s.statusStore.UpdateInterestDetails(ctx, customerId, "SUCCEEDED", "Interest details fetched successfully")
 		if err != nil {
 			return nil, err
+		}
+
+		// Persist interest/product account details (step 12.4).
+		err = s.detailsStore.SaveInterestInfo(ctx, customerId, interestRes.ProductCode, float64(interestRes.InterestRate), string(interestRes.InterestType), interestRes.Currency)
+		if err != nil {
+			return nil, fmt.Errorf("failed to save interest account details: %w", err)
 		}
 	}
 
@@ -134,15 +147,9 @@ func (s *OrchestrationService) Onboard(ctx context.Context, req onboard.OnboardR
 		accountId := "ACC-" + customerId
 		cardId := "CARD-" + customerId + "-001"
 
-		details := &store.AccountDetails{
-			CustomerId:     customerId,
-			CoreCustomerId: coreCustomerId,
-			AccountId:      accountId,
-			CardId:         cardId,
-			Status:         "ONBOARDED",
-		}
-
-		err = s.detailsStore.SaveAccountDetails(ctx, details)
+		// Persist account/card details before marking SUCCEEDED so the idempotent
+		// read path always finds a complete record (step 12.6).
+		err = s.detailsStore.SaveCardInfo(ctx, customerId, accountId, cardId, string(req.CardType), util.MaskCardNumber(req.CardNumber))
 		if err != nil {
 			_ = s.statusStore.UpdateAccountOnboarding(ctx, customerId, "FAILED", err.Error(), "FAILED")
 			return nil, fmt.Errorf("account details saving step failed: %w", err)

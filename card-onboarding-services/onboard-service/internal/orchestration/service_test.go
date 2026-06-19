@@ -241,13 +241,9 @@ func TestOnboard_Idempotency(t *testing.T) {
 	_ = statusStore.UpdateInterestDetails(context.Background(), "CUST001", "SUCCEEDED", "Interest details fetched")
 	_ = statusStore.UpdateAccountOnboarding(context.Background(), "CUST001", "SUCCEEDED", "Account onboarding completed", "SUCCEEDED")
 
-	_ = detailsStore.SaveAccountDetails(context.Background(), &store.AccountDetails{
-		CustomerId:     "CUST001",
-		CoreCustomerId: "CORE-CUST001",
-		AccountId:      "ACC-CUST001",
-		CardId:         "CARD-CUST001-001",
-		Status:         "ONBOARDED",
-	})
+	_ = detailsStore.SaveCustomerInfo(context.Background(), "CUST001", "CORE-CUST001", "Nguyen Van A", "a@example.com")
+	_ = detailsStore.SaveInterestInfo(context.Background(), "CUST001", "SAVINGS_BASIC", 4.5, "VARIABLE", "AUD")
+	_ = detailsStore.SaveCardInfo(context.Background(), "CUST001", "ACC-CUST001", "CARD-CUST001-001", "VISA", "************1111")
 
 	custClient := &MockCustomerClient{
 		RegisterFunc: func(ctx context.Context, correlationID string, customerID string, holderName string, email string) (*customerpkg.RegisterCustomerResult, error) {

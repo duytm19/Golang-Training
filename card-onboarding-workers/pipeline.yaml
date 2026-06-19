@@ -1,0 +1,12 @@
+steps:
+  - label: ":golang: Run Linter"
+    command: "golangci-lint run ./..."
+    plugins:
+      - docker#v5.11.0:
+          image: "golangci/golangci-lint:v1.64-alpine"
+
+  - label: ":aws-cdk: Validate CDK Synthesis"
+    command: "make infra-synth-all"
+
+  - label: ":go: Run Unit Tests & Check Coverage"
+    command: "go test -coverprofile=coverage.out ./... && go tool cover -func=coverage.out | awk '/total:/ {print $$3}' | sed 's/%//' | awk '{if ($$1 < 70) {print \"Coverage is below 70%: \"$$1\"%\"; exit 1} else {print \"Coverage is \"$$1\"%\"; exit 0}}'"

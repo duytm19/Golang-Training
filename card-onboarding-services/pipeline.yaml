@@ -1,0 +1,12 @@
+steps:
+  - label: ":golang: Run Linter"
+    command: "golangci-lint run ./..."
+    plugins:
+      - docker#v5.11.0:
+          image: "golangci/golangci-lint:v1.64-alpine"
+
+  - label: ":swagger: Validate Swagger & Generate Check"
+    command: "make swagger-validate && make generate-check"
+
+  - label: ":go: Run Unit Tests & Check Coverage"
+    command: "go test -coverprofile=coverage.out $$(go list ./... | grep -v '/pkg/') && go tool cover -func=coverage.out | awk '/total:/ {print $$3}' | sed 's/%//' | awk '{if ($$1 < 70) {print \"Coverage is below 70%: \"$$1\"%\"; exit 1} else {print \"Coverage is \"$$1\"%\"; exit 0}}'"

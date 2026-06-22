@@ -1,0 +1,80 @@
+{
+  "title": "Card Onboarding Platform Dashboard",
+  "description": "Dashboard for monitoring metrics, error rates, and queue depths in the Card Onboarding Platform.",
+  "layout_type": "ordered",
+  "widgets": [
+    {
+      "id": 1,
+      "definition": {
+        "title": "Accepted Records Rate",
+        "type": "timeseries",
+        "requests": [
+          {
+            "q": "sum:card_onboarding.records_accepted.count{*}.as_rate()",
+            "style": {
+              "palette": "cool",
+              "line_type": "solid",
+              "line_width": "normal"
+            },
+            "display_type": "line"
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "definition": {
+        "title": "Business Validation Failures",
+        "type": "timeseries",
+        "requests": [
+          {
+            "q": "sum:card_onboarding.business_validation_failed.count{*}.as_rate()",
+            "style": {
+              "palette": "warm",
+              "line_type": "solid",
+              "line_width": "normal"
+            },
+            "display_type": "line"
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "definition": {
+        "title": "Onboarding Latency (p95)",
+        "type": "timeseries",
+        "requests": [
+          {
+            "q": "p95:card_onboarding.processing_duration.histogram{*}",
+            "style": {
+              "palette": "purple",
+              "line_type": "solid",
+              "line_width": "normal"
+            },
+            "display_type": "line"
+          }
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "definition": {
+        "title": "Worker DLQ Message Count",
+        "type": "query_value",
+        "requests": [
+          {
+            "q": "sum:aws.sqs.approximate_number_of_messages_visible{queue_name:card-onboarding-worker-dlq-dev}",
+            "conditional_formats": [
+              {
+                "comparator": ">",
+                "value": 0,
+                "palette": "white_on_red"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

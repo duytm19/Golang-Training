@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Card Onboarding - SQS Worker DLQ Depth Alert",
+    "type": "query alert",
+    "query": "sum(last_5m):sum:aws.sqs.approximate_number_of_messages_visible{queue_name:card-onboarding-worker-dlq-dev} > 0",
+    "message": "Notification: Messages detected in SQS Worker DLQ (card-onboarding-worker-dlq-dev). This indicates processing failures that could not be resolved after max retries. @slack-oncall",
+    "tags": [
+      "env:dev",
+      "service:onboard-service",
+      "team:card-platform"
+    ],
+    "options": {
+      "thresholds": {
+        "critical": 0.0
+      },
+      "notify_no_data": false,
+      "renotify_interval": 60
+    }
+  },
+  {
+    "name": "Card Onboarding - API High Error Rate Alert",
+    "type": "query alert",
+    "query": "sum(last_5m):sum:card_onboarding.processing_duration.histogram{status:failed}.as_count() / sum:card_onboarding.processing_duration.histogram{*}.as_count() > 0.05",
+    "message": "Notification: API orchestrator onboarding failure rate has exceeded 5% over the last 5 minutes. Please check service health and logs. @slack-oncall",
+    "tags": [
+      "env:dev",
+      "service:onboard-service",
+      "team:card-platform"
+    ],
+    "options": {
+      "thresholds": {
+        "critical": 0.05
+      },
+      "notify_no_data": false,
+      "renotify_interval": 30
+    }
+  }
+]

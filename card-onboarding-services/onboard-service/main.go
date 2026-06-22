@@ -10,6 +10,7 @@ import (
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/gin-gonic/gin"
+	"github.com/org/card-onboarding-services/onboard-service/internal/appmetrics"
 	"github.com/org/card-onboarding-services/onboard-service/internal/card"
 	"github.com/org/card-onboarding-services/onboard-service/internal/client"
 	"github.com/org/card-onboarding-services/onboard-service/internal/config"
@@ -41,6 +42,9 @@ func CorrelationAndLoggingMiddleware() gin.HandlerFunc {
 
 func main() {
 	appConfig := config.Load()
+
+	appmetrics.Init(appConfig.DatadogAgentAddr)
+	defer appmetrics.Close()
 
 	// Initialize AWS Config for DynamoDB
 	// LoadDefaultConfig will attempt to resolve AWS credentials and config.

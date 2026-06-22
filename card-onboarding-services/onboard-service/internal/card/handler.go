@@ -1,9 +1,12 @@
 package card
 
 import (
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/org/card-onboarding-services/onboard-service/internal/appmetrics"
 	"github.com/org/card-onboarding-services/onboard-service/internal/orchestration"
 	"github.com/org/card-onboarding-services/onboard-service/pkg/onboard"
 )
@@ -27,6 +30,7 @@ func (h *Handler) HealthCheck(c *gin.Context) {
 
 // OnboardCard (POST /internal/cards/onboard)
 func (h *Handler) OnboardCard(c *gin.Context) {
+	start := time.Now()
 	var req onboard.OnboardRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, onboard.ErrorResponse{
@@ -34,6 +38,7 @@ func (h *Handler) OnboardCard(c *gin.Context) {
 			Message:       err.Error(),
 			CorrelationId: c.GetHeader("X-Correlation-Id"),
 		})
+		appmetrics.EmitBusinessValidationFailed([]string{"error_type:bad_request"})
 		return
 	}
 
@@ -43,14 +48,26 @@ func (h *Handler) OnboardCard(c *gin.Context) {
 	}
 
 	resp, err := h.orchestrator.Onboard(c.Request.Context(), req)
+	duration := time.Since(start)
+	durationMs := duration.Milliseconds()
+
 	if err != nil {
+		log.Printf(`{"level":"error","message":"Onboarding request failed","correlationId":"%s","jobId":"%s","customerId":"%s","durationMs":%d,"error":"%s"}`+"\n",
+			correlationID, req.JobId, req.CustomerId, durationMs, err.Error())
 		c.JSON(http.StatusInternalServerError, onboard.ErrorResponse{
 			Code:          "ONBOARDING_FAILURE",
 			Message:       err.Error(),
 			CorrelationId: correlationID,
 		})
+		appmetrics.EmitProcessingDuration(duration, []string{"status:failed"})
 		return
 	}
+
+	log.Printf(`{"level":"info","message":"Onboarding request processed","correlationId":"%s","jobId":"%s","customerId":"%s","durationMs":%d}`+"\n",
+		correlationID, req.JobId, req.CustomerId, durationMs)
+
+	appmetrics.EmitRecordAccepted([]string{"status:success"})
+	appmetrics.EmitProcessingDuration(duration, []string{"status:success"})
 
 	c.JSON(http.StatusOK, resp)
 }

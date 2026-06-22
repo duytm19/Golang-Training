@@ -46,6 +46,7 @@ func TestHandleEvent_ScenarioSuccess(t *testing.T) {
 		CardType:      "VISA",
 		CardNumber:    "4111111111111111",
 		ExpiryDate:    "12/28",
+		HolderName:    "John Doe",
 		Email:         "test@domain.co",
 	}
 	bodyBytes, _ := json.Marshal(rec)
@@ -78,8 +79,9 @@ func TestHandleEvent_ScenarioValidationFailure(t *testing.T) {
 		CustomerId:    "CUST002",
 		CardType:      "VISA",
 		CardNumber:    "4111111111111111",
-		ExpiryDate:    "12/24", // Expired
-		Email:         "test@domain.co",
+		ExpiryDate:    "12/28",
+		HolderName:    "John Doe",
+		Email:         "invalid-email", // fails business validation
 	}
 	bodyBytes, _ := json.Marshal(rec)
 
@@ -119,6 +121,7 @@ func TestHandleEvent_ScenarioNonRetryableError(t *testing.T) {
 		CardType:   "VISA",
 		CardNumber: "4111111111111111",
 		ExpiryDate: "12/28",
+		HolderName: "John Doe",
 		Email:      "test@domain.co",
 	}
 	bodyBytes, _ := json.Marshal(rec)
@@ -155,6 +158,7 @@ func TestHandleEvent_ScenarioRetryableError(t *testing.T) {
 		CardType:   "VISA",
 		CardNumber: "4111111111111111",
 		ExpiryDate: "12/28",
+		HolderName: "John Doe",
 		Email:      "test@domain.co",
 	}
 	bodyBytes, _ := json.Marshal(rec)
@@ -187,6 +191,7 @@ func TestHandleEvent_ScenarioNetworkError(t *testing.T) {
 		CardType:   "VISA",
 		CardNumber: "4111111111111111",
 		ExpiryDate: "12/28",
+		HolderName: "John Doe",
 		Email:      "test@domain.co",
 	}
 	bodyBytes, _ := json.Marshal(rec)

@@ -12,6 +12,7 @@ type Config struct {
 	AwsRegion           string
 	RequestStatusTable  string
 	AccountDetailsTable string
+	DatadogAgentAddr    string
 }
 
 // Load loads configurations from environment variables or returns defaults
@@ -23,6 +24,7 @@ func Load() *Config {
 		AwsRegion:           getEnv("AWS_REGION", "ap-southeast-2"),
 		RequestStatusTable:  getEnv("REQUEST_STATUS_TABLE", "onboard-service-request-status"),
 		AccountDetailsTable: getEnv("ACCOUNT_DETAILS_TABLE", "onboard-service-account-details"),
+		DatadogAgentAddr:    getEnv("DATADOG_AGENT_ADDR", "localhost:8125"),
 	}
 }
 

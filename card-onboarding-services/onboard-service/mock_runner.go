@@ -7,8 +7,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/org/card-onboarding-services/onboard-service/internal/appmetrics"
 	"github.com/org/card-onboarding-services/onboard-service/internal/card"
 	"github.com/org/card-onboarding-services/onboard-service/internal/client"
+	"github.com/org/card-onboarding-services/onboard-service/internal/config"
 	"github.com/org/card-onboarding-services/onboard-service/internal/orchestration"
 	"github.com/org/card-onboarding-services/onboard-service/internal/store"
 	onboardpkg "github.com/org/card-onboarding-services/onboard-service/pkg/onboard"
@@ -34,6 +36,10 @@ func CorrelationAndLoggingMiddleware() gin.HandlerFunc {
 }
 
 func main() {
+	appConfig := config.Load()
+	appmetrics.Init(appConfig.DatadogAgentAddr)
+	defer appmetrics.Close()
+
 	// Use mock stores
 	statusStore := store.NewMockRequestStatusStore()
 	detailsStore := store.NewMockAccountDetailsStore()

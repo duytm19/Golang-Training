@@ -89,8 +89,8 @@ func NewPreprocessorStack(scope constructs.Construct, id string, props *Preproce
 	})
 
 	// 5. IAM Permissions (Least Privilege)
-	inputBucket.GrantRead(preprocessorLambda)
-	outputBucket.GrantWrite(preprocessorLambda, jsii.String("processed/*"))
+	inputBucket.GrantRead(preprocessorLambda, nil)
+	outputBucket.GrantWrite(preprocessorLambda, nil, jsii.Strings("processed/*"))
 
 	// Lambda consumes events from Preprocessor Queue
 	awslambda.NewEventSourceMapping(stack, jsii.String("PreprocessorQueueTrigger"), &awslambda.EventSourceMappingProps{

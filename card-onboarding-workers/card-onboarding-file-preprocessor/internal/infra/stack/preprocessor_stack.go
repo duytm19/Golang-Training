@@ -82,7 +82,6 @@ func NewPreprocessorStack(scope constructs.Construct, id string, props *Preproce
 		Code:         awslambda.Code_FromAsset(jsii.String("./dist"), nil),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		Environment: &map[string]*string{
-			"AWS_REGION":     stack.Region(),
 			"OUTPUT_BUCKET":  outputBucket.BucketName(),
 			"WORKER_SQS_URL": jsii.String(workerQueueUrl),
 		},
@@ -90,7 +89,8 @@ func NewPreprocessorStack(scope constructs.Construct, id string, props *Preproce
 
 	// 5. IAM Permissions (Least Privilege)
 	inputBucket.GrantRead(preprocessorLambda, nil)
-	outputBucket.GrantWrite(preprocessorLambda, nil, jsii.Strings("processed/*"))
+	outputBucket.GrantWrite(preprocessorLambda, jsii.String("processed/*"), nil)
+	preprocessorQueue.GrantConsumeMessages(preprocessorLambda)
 
 	// Lambda consumes events from Preprocessor Queue
 	awslambda.NewEventSourceMapping(stack, jsii.String("PreprocessorQueueTrigger"), &awslambda.EventSourceMappingProps{

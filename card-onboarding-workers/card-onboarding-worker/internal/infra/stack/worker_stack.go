@@ -53,7 +53,6 @@ func NewWorkerStack(scope constructs.Construct, id string, props *WorkerStackPro
 		Code:         awslambda.Code_FromAsset(jsii.String("./dist"), nil),
 		Timeout:      awscdk.Duration_Seconds(jsii.Number(30)),
 		Environment: &map[string]*string{
-			"AWS_REGION":          stack.Region(),
 			"ONBOARD_SERVICE_URL": jsii.String(onboardServiceUrl),
 			"TIMEOUT_SECONDS":     jsii.String("10"),
 		},

@@ -1,0 +1,5 @@
+customer_id,card_type,card_number,expiry_date,holder_name,email
+CUST201,DISCOVER,6011111111111111,12/28,Unsupported Card Type,test1@example.com
+CUST202,VISA,4111ABC111111111,12/28,Non Numeric Card,test2@example.com
+CUST203,MASTERCARD,5555444433332222,04/24,Expired Card,test3@example.com
+CUST204,AMEX,378282246310005,12/28,John Smith,invalid-email

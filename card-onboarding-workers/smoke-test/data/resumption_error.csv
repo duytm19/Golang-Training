@@ -1,0 +1,2 @@
+customer_id,card_type,card_number,expiry_date,holder_name,email
+CUST_FAIL_INTEREST,VISA,4111111111111111,12/28,Fail downstream,fail.interest@example.com

@@ -1,6 +1,6 @@
 module github.com/org/card-onboarding-services
 
-go 1.26
+go 1.23
 
 require (
 	github.com/DataDog/datadog-go/v5 v5.8.3

@@ -1,6 +1,6 @@
 module github.com/org/card-onboarding-workers/card-onboarding-worker
 
-go 1.26
+go 1.23
 
 require (
 	github.com/aws/aws-cdk-go/awscdk/v2 v2.260.0

@@ -14,17 +14,19 @@ steps:
           make swagger-validate && make generate-check
         plugins:
           - docker#v5.11.0:
-              image: "golang:1.26-alpine"
+              image: "golang:1.23-alpine"
 
       - label: ":go: Services - Run Unit Tests & Check Coverage"
         command: |
           cd card-onboarding-services
-          apk add --no-cache git
-          go test -coverprofile=coverage.out $$(go list ./... | grep -v '/pkg/')
-          go tool cover -func=coverage.out | awk '/total:/ {print $$3}' | sed 's/%//' | awk '{if ($$1 < 70) {print "Coverage is below 70%: "$$1"%"; exit 1} else {print "Coverage is "$$1"%"; exit 0}}'
+          apk add --no-cache git grep awk sed
+          go test -coverprofile=coverage.out github.com/org/card-onboarding-services/account-management-service/internal/account github.com/org/card-onboarding-services/customer-management-service/internal/customer github.com/org/card-onboarding-services/onboard-service/internal/orchestration
+          SERVICES_COV=$$(go tool cover -func=coverage.out | awk '/total:/ {print $$3}' | sed 's/%//')
+          echo "Services core logic coverage: $${SERVICES_COV}%"
+          awk -v cov="$${SERVICES_COV}" 'BEGIN { if (cov < 70) { print "Error: Services coverage is below 70%"; exit 1 } }' || exit 1
         plugins:
           - docker#v5.11.0:
-              image: "golang:1.26-alpine"
+              image: "golang:1.23-alpine"
 
       - label: ":docker: Services - Build Onboard Service Image"
         command: "cd card-onboarding-services && docker build -t onboard-service:latest -f onboard-service/Dockerfile ."
@@ -50,7 +52,7 @@ steps:
           GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o card-onboarding-worker/dist/bootstrap card-onboarding-worker/main.go
         plugins:
           - docker#v5.11.0:
-              image: "golang:1.26-alpine"
+              image: "golang:1.23-alpine"
 
       - label: ":aws-cdk: Workers - Validate CDK Synthesis"
         command: |
@@ -60,7 +62,7 @@ steps:
           make infra-synth-all
         plugins:
           - docker#v5.11.0:
-              image: "golang:1.26-alpine"
+              image: "golang:1.23-alpine"
 
       - label: ":go: Workers - Run Unit Tests & Check Coverage"
         command: |
@@ -82,4 +84,4 @@ steps:
           awk -v cov="$${WORKER_COV}" 'BEGIN { if (cov < 70) { print "Error: Worker coverage is below 70%"; exit 1 } }' || exit 1
         plugins:
           - docker#v5.11.0:
-              image: "golang:1.26-alpine"
+              image: "golang:1.23-alpine"

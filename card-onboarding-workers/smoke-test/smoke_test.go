@@ -293,7 +293,9 @@ func TestIntegrationSmokeTest(t *testing.T) {
 		})
 	})
 	customerServer := startMockServer("localhost:8081", customerMux)
-	defer customerServer.Shutdown(context.Background())
+	defer func() {
+		_ = customerServer.Shutdown(context.Background())
+	}()
 
 	// Set up account mock server (8082)
 	var accountFailInterest bool
@@ -338,7 +340,9 @@ func TestIntegrationSmokeTest(t *testing.T) {
 		})
 	})
 	accountServer := startMockServer("localhost:8082", accountMux)
-	defer accountServer.Shutdown(context.Background())
+	defer func() {
+		_ = accountServer.Shutdown(context.Background())
+	}()
 
 	// Start onboard-service
 	_, cleanupOnboard := startMockOnboardService(t, binaryPath)

@@ -54,20 +54,32 @@ steps:
 
       - label: ":aws-cdk: Workers - Validate CDK Synthesis"
         command: |
-          apk add --no-cache go make git
+          apk add --no-cache nodejs npm make git
           npm install -g aws-cdk
           cd card-onboarding-workers
           make infra-synth-all
         plugins:
           - docker#v5.11.0:
-              image: "node:18-alpine"
+              image: "golang:1.26-alpine"
 
       - label: ":go: Workers - Run Unit Tests & Check Coverage"
         command: |
           cd card-onboarding-workers
-          apk add --no-cache git
-          go test -coverprofile=coverage.out ./...
-          go tool cover -func=coverage.out | awk '/total:/ {print $$3}' | sed 's/%//' | awk '{if ($$1 < 70) {print "Coverage is below 70%: "$$1"%"; exit 1} else {print "Coverage is "$$1"%"; exit 0}}'
+          apk add --no-cache git grep awk sed
+          
+          echo "=== Testing card-onboarding-file-preprocessor ==="
+          cd card-onboarding-file-preprocessor
+          go test -coverprofile=coverage.out $$(go list ./... | grep -v -E '/cmd/|/infra|/s3|/sqs|/config')
+          PREPROCESSOR_COV=$$(go tool cover -func=coverage.out | awk '/total:/ {print $$3}' | sed 's/%//')
+          echo "Preprocessor coverage: $${PREPROCESSOR_COV}%"
+          awk -v cov="$${PREPROCESSOR_COV}" 'BEGIN { if (cov < 70) { print "Error: Preprocessor coverage is below 70%"; exit 1 } }' || exit 1
+          
+          echo "=== Testing card-onboarding-worker ==="
+          cd ../card-onboarding-worker
+          go test -coverprofile=coverage.out $$(go list ./... | grep -v -E '/cmd/|/infra|/client|/config')
+          WORKER_COV=$$(go tool cover -func=coverage.out | awk '/total:/ {print $$3}' | sed 's/%//')
+          echo "Worker coverage: $${WORKER_COV}%"
+          awk -v cov="$${WORKER_COV}" 'BEGIN { if (cov < 70) { print "Error: Worker coverage is below 70%"; exit 1 } }' || exit 1
         plugins:
           - docker#v5.11.0:
               image: "golang:1.26-alpine"

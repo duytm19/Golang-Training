@@ -1,0 +1,73 @@
+steps:
+  - group: "Card Onboarding Services"
+    steps:
+      - label: ":golang: Services - Run Linter"
+        command: "cd card-onboarding-services && golangci-lint run ./..."
+        plugins:
+          - docker#v5.11.0:
+              image: "golangci/golangci-lint:v1.64-alpine"
+
+      - label: ":swagger: Services - Validate Swagger & Generate Check"
+        command: |
+          cd card-onboarding-services
+          apk add --no-cache make git
+          make swagger-validate && make generate-check
+        plugins:
+          - docker#v5.11.0:
+              image: "golang:1.26-alpine"
+
+      - label: ":go: Services - Run Unit Tests & Check Coverage"
+        command: |
+          cd card-onboarding-services
+          apk add --no-cache make git grep awk sed
+          go test -coverprofile=coverage.out $$(go list ./... | grep -v '/pkg/')
+          go tool cover -func=coverage.out | awk '/total:/ {print $$3}' | sed 's/%//' | awk '{if ($$1 < 70) {print "Coverage is below 70%: "$$1"%"; exit 1} else {print "Coverage is "$$1"%"; exit 0}}'
+        plugins:
+          - docker#v5.11.0:
+              image: "golang:1.26-alpine"
+
+      - label: ":docker: Services - Build Onboard Service Image"
+        command: "cd card-onboarding-services && docker build -t onboard-service:latest -f onboard-service/Dockerfile ."
+
+      - label: ":docker: Services - Build Customer Service Image"
+        command: "cd card-onboarding-services && docker build -t customer-management-service:latest -f customer-management-service/Dockerfile ."
+
+      - label: ":docker: Services - Build Account Service Image"
+        command: "cd card-onboarding-services && docker build -t account-management-service:latest -f account-management-service/Dockerfile ."
+
+  - group: "Card Onboarding Workers"
+    steps:
+      - label: ":golang: Workers - Run Linter"
+        command: "cd card-onboarding-workers && golangci-lint run ./..."
+        plugins:
+          - docker#v5.11.0:
+              image: "golangci/golangci-lint:v1.64-alpine"
+
+      - label: ":go: Workers - Build Lambda Binaries"
+        command: |
+          cd card-onboarding-workers
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o card-onboarding-file-preprocessor/dist/bootstrap card-onboarding-file-preprocessor/main.go
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o card-onboarding-worker/dist/bootstrap card-onboarding-worker/main.go
+        plugins:
+          - docker#v5.11.0:
+              image: "golang:1.26-alpine"
+
+      - label: ":aws-cdk: Workers - Validate CDK Synthesis"
+        command: |
+          apk add --no-cache go make git
+          npm install -g aws-cdk
+          cd card-onboarding-workers
+          make infra-synth-all
+        plugins:
+          - docker#v5.11.0:
+              image: "node:18-alpine"
+
+      - label: ":go: Workers - Run Unit Tests & Check Coverage"
+        command: |
+          cd card-onboarding-workers
+          apk add --no-cache make git grep awk sed
+          go test -coverprofile=coverage.out ./...
+          go tool cover -func=coverage.out | awk '/total:/ {print $$3}' | sed 's/%//' | awk '{if ($$1 < 70) {print "Coverage is below 70%: "$$1"%"; exit 1} else {print "Coverage is "$$1"%"; exit 0}}'
+        plugins:
+          - docker#v5.11.0:
+              image: "golang:1.26-alpine"

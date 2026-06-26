@@ -11,6 +11,7 @@ RUN go mod download
 COPY . .
 
 # Build the customer-management-service
+RUN go mod tidy
 RUN CGO_ENABLED=0 GOOS=linux go build -o customer-service-bin ./customer-management-service/main.go
 
 # Stage 2: Create a minimal production image

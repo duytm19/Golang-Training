@@ -11,6 +11,7 @@ RUN go mod download
 COPY . .
 
 # Build the account-management-service
+RUN go mod tidy
 RUN CGO_ENABLED=0 GOOS=linux go build -o account-service-bin ./account-management-service/main.go
 
 # Stage 2: Create a minimal production image

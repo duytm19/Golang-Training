@@ -2,7 +2,7 @@ steps:
   - group: "Card Onboarding Services"
     steps:
       - label: ":golang: Services - Run Linter"
-        command: "golangci-lint run ./..."
+        command: "GOWORK=off golangci-lint run ./..."
         plugins:
           - docker#v5.11.0:
               image: "golangci/golangci-lint:v1.64-alpine"
@@ -15,19 +15,19 @@ steps:
           make swagger-validate && make generate-check
         plugins:
           - docker#v5.11.0:
-              image: "golang:1.24-alpine"
+              image: "golang:1.26-alpine"
 
       - label: ":go: Services - Run Unit Tests & Check Coverage"
         command: |
           cd card-onboarding-services
-          apk add --no-cache git grep awk sed
+          apk add --no-cache git grep sed
           go test -coverprofile=coverage.out github.com/org/card-onboarding-services/account-management-service/internal/account github.com/org/card-onboarding-services/customer-management-service/internal/customer github.com/org/card-onboarding-services/onboard-service/internal/orchestration
           SERVICES_COV=$$(go tool cover -func=coverage.out | awk '/total:/ {print $$3}' | sed 's/%//')
           echo "Services core logic coverage: $${SERVICES_COV}%"
           awk -v cov="$${SERVICES_COV}" 'BEGIN { if (cov < 70) { print "Error: Services coverage is below 70%"; exit 1 } }' || exit 1
         plugins:
           - docker#v5.11.0:
-              image: "golang:1.24-alpine"
+              image: "golang:1.26-alpine"
 
       - label: ":docker: Services - Build Onboard Service Image"
         command: "cd card-onboarding-services && docker build -t onboard-service:latest -f onboard-service/Dockerfile ."
@@ -41,7 +41,7 @@ steps:
   - group: "Card Onboarding Workers"
     steps:
       - label: ":golang: Workers - Run Linter"
-        command: "golangci-lint run ./..."
+        command: "GOWORK=off golangci-lint run ./..."
         plugins:
           - docker#v5.11.0:
               image: "golangci/golangci-lint:v1.64-alpine"
@@ -54,7 +54,7 @@ steps:
           GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o card-onboarding-worker/dist/bootstrap card-onboarding-worker/main.go
         plugins:
           - docker#v5.11.0:
-              image: "golang:1.24-alpine"
+              image: "golang:1.26-alpine"
 
       - label: ":aws-cdk: Workers - Validate CDK Synthesis"
         command: |
@@ -64,12 +64,12 @@ steps:
           make infra-synth-all
         plugins:
           - docker#v5.11.0:
-              image: "golang:1.24-alpine"
+              image: "golang:1.26-alpine"
 
       - label: ":go: Workers - Run Unit Tests & Check Coverage"
         command: |
           cd card-onboarding-workers
-          apk add --no-cache git grep awk sed
+          apk add --no-cache git grep sed
           
           echo "=== Testing card-onboarding-file-preprocessor ==="
           cd card-onboarding-file-preprocessor
@@ -86,4 +86,4 @@ steps:
           awk -v cov="$${WORKER_COV}" 'BEGIN { if (cov < 70) { print "Error: Worker coverage is below 70%"; exit 1 } }' || exit 1
         plugins:
           - docker#v5.11.0:
-              image: "golang:1.24-alpine"
+              image: "golang:1.26-alpine"

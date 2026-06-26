@@ -1,6 +1,6 @@
 module github.com/org/card-onboarding-workers
 
-go 1.23
+go 1.26.0
 
 replace (
 	github.com/org/card-onboarding-services => ../card-onboarding-services

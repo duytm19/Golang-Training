@@ -19,7 +19,7 @@ steps:
       - label: ":go: Services - Run Unit Tests & Check Coverage"
         command: |
           cd card-onboarding-services
-          apk add --no-cache make git grep awk sed
+          apk add --no-cache git
           go test -coverprofile=coverage.out $$(go list ./... | grep -v '/pkg/')
           go tool cover -func=coverage.out | awk '/total:/ {print $$3}' | sed 's/%//' | awk '{if ($$1 < 70) {print "Coverage is below 70%: "$$1"%"; exit 1} else {print "Coverage is "$$1"%"; exit 0}}'
         plugins:
@@ -65,7 +65,7 @@ steps:
       - label: ":go: Workers - Run Unit Tests & Check Coverage"
         command: |
           cd card-onboarding-workers
-          apk add --no-cache make git grep awk sed
+          apk add --no-cache git
           go test -coverprofile=coverage.out ./...
           go tool cover -func=coverage.out | awk '/total:/ {print $$3}' | sed 's/%//' | awk '{if ($$1 < 70) {print "Coverage is below 70%: "$$1"%"; exit 1} else {print "Coverage is "$$1"%"; exit 0}}'
         plugins:
